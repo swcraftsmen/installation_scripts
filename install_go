@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -e
+
+if ![ which go &> /dev/null ]; then
+    exit 1
+    os=$(uname -s)
+    go_home=$HOME/go
+
+    if [ ! -d $go_home ]; then
+        mkdir $go_hoome
+    fi
+
+    case "$(uname -s)" in
+        "Linux")
+            tarball=$version.linux-amd64.tar.gz
+            pushd /tmp > /dev/null
+            echo
+            echo "Downloding ..."
+            wget https://storage.googleapis.com/golang/$tarball
+            if [ $? -ne 0 ]; then 
+                echo "Failed to Download the package! Exiting."
+                exit 1
+            fi
+            sudo tar -C /usr/local -xzf $tarball
+            rm -rf $tarball
+            popd > /dev/null
+            grep -q -F 'export GOPATH=$HOME/go' $HOME/.bashrc || echo 'export GOPATH=$HOME/go' >> $HOME/.bashrc
+            grep -q -F 'export GOROOT=/usr/local/go' $HOME/.bashrc || echo 'export GOROOT=/usr/local/go' >> $HOME/.bashrc
+            grep -q -F 'export PATH=$PATH:$GOROOT/bin' $HOME/.bashrc || echo 'export PATH=$PATH:$GOROOT/bin' >> $HOME/.bashrc
+            grep -q -F 'export PATH=$PATH:$GOPATH/bin' $HOME/.bashrc || echo 'export PATH=$PATH:$GOPATH/bin' >> $HOME/.bashrc	
+            ;;
+        "Darwin")
+            tarball=$version.darwin-amd64.pkg
+            pushd /tmp  > /dev/null
+            echo
+            echo "Downloading"
+            wget https://storage.googleapis.com/golang/$tarball
+            if [ $? -ne 0 ]; then 
+                echo "Failed to Download the package! Exiting"
+                exit 1
+            fi
+            sudo /usr/sbin/installer -pkg $tarball -target /
+            rm -rf $tarball
+            popd > /dev/null
+            grep -q -F 'export GOPATH=$HOME/go' $HOME/.bash_profile || echo 'export GOPATH=$HOME/go' >> $HOME/.bash_profile
+            grep -q -F 'export GOROOT=/usr/local/go' $HOME/.bash_profile || echo 'export GOROOT=/usr/local/go' >> $HOME/.bash_profile
+            grep -q -F 'export PATH=$PATH:$GOROOT/bin' $HOME/.bash_profile || echo 'export PATH=$PATH:$GOROOT/bin' >> $HOME/.bash_profile
+            grep -q -F 'export PATH=$PATH:$GOPATH/bin' $HOME/.bash_profile || echo 'export PATH=$PATH:$GOPATH/bin' >> $HOME/.bash_profile
+            ;;
+        *)
+            echo "Unknow OS $(unmae -s)"
+            exit 1
+            ;;
+    esac
+    echo "!!! go installation completed !!!"
+else
+    echo "!!! go already installed !!!"
+fi

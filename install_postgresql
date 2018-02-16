@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+set -e
+
+if ![ which psql &> /dev/null ]; then
+    case "$(uname -s)" in
+        "Linux")
+            if [[ ! -f /etc/apt/sources.list.d/pgdg.list ]]; then
+                sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+                wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+                sudo apt-get -y update
+            fi 
+            for dep in postgresql postgresql-server-dev postgresql-client postgresql-contrib postgresql-plperl; do
+                sudo apt-get install -y ${dep}-9.6
+            done
+            sudo apt-get install -y postgresql-common
+            sudo apt-get install -y libpq-dev
+            ;;
+        "Darwin")
+            brew install postgresql
+            $(brew --prefix)/bin/initdb /usr/local/var/postgres -E utf8
+            if ![ -d "~/Library/LaunchAgents" ]; then
+                mkdir -p ~/Library/LaunchAgents
+            fi
+            ln -sfv /usr/local/opt/postgresql/*.plist ~/Library/LaunchAgents
+            echo 'alias pg-start="launchctl load ~/Library/LaunchAgents/homebrew.mxcl.postgresql.plist"' > ~/.bash_profile
+            echo 'alias pg-stop="launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.postgresql.plist"' > ~/.bash_profile
+            ;;
+        *)
+            echo "Unknow OS $(unmae -s)"
+            exit 1
+            ;;
+    esac
+    echo "!!! PostgreSQL installation completed !!!"
+else
+    echo "!!! PostgreSQL already installed !!!"
+fi
